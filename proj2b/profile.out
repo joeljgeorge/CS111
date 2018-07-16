@@ -1,0 +1,203 @@
+Total: 2474 samples
+    2364  95.6%  95.6%     2455  99.2% thread_function
+      56   2.3%  97.8%       56   2.3% __strcmp_sse42
+      16   0.6%  98.5%       44   1.8% SortedList_insert
+      10   0.4%  98.9%       38   1.5% SortedList_lookup
+       9   0.4%  99.2%        9   0.4% hash
+       8   0.3%  99.6%       19   0.8% rand_string_gen
+       6   0.2%  99.8%       10   0.4% __random
+       4   0.2% 100.0%        4   0.2% __random_r
+       1   0.0% 100.0%        1   0.0% _init
+       0   0.0% 100.0%     2455  99.2% __clone
+       0   0.0% 100.0%       19   0.8% __libc_start_main
+       0   0.0% 100.0%       19   0.8% _start
+       0   0.0% 100.0%       19   0.8% element_creation
+       0   0.0% 100.0%       19   0.8% main
+       0   0.0% 100.0%       10   0.4% rand
+       0   0.0% 100.0%     2455  99.2% start_thread
+ROUTINE ====================== thread_function in /u/cs/ugrad/george/CS111/proj2b/lab2_list.c
+  2364   2455 Total samples (flat / cumulative)
+     .      .  322:     element = create_list_item(key_array[index]);
+     .      .  323:     list[index] = element;
+     .      .  324:   }
+     .      .  325: }
+     .      .  326: 
+---
+     .      .  327: void *thread_function(void *arg_ptr){
+     .      .  328: 
+     .      .  329:   int iterations = (*((struct args*)arg_ptr)).it_num;
+     .      .  330:   SortedListElement_t** el_array =  (*((struct args*)arg_ptr)).el_array;
+     .      .  331:   SortedList_t** list_array = (*((struct args*)arg_ptr)).list_array;
+     .      .  332:   int list_num = (*((struct args*)arg_ptr)).list_num;
+     .      .  333:   int max = (*((struct args*)arg_ptr)).max;
+     .      .  334: 
+     .      .  335:   int i = 0;
+     .      .  336:   //TODO: lock this
+     .      .  337:   if(sync_mode == 'm')
+     .      .  338:     pthread_mutex_lock(&el_arr_index_lock);
+     .      .  339:   if(sync_mode == 's')
+     .      .  340:     while(__sync_lock_test_and_set(&s_lock, 1));
+     .      .  341:   int base_index = element_array_index;
+     .      .  342:   int max_index_per_thread = base_index + iterations;
+     .      .  343:   element_array_index+=iterations;
+     .      .  344:   if(sync_mode == 'm')
+     .      .  345:     pthread_mutex_unlock(&el_arr_index_lock);
+     .      .  346:   if(sync_mode == 's')
+     .      .  347:     __sync_lock_release(&s_lock);
+     .      .  348:   //release locks
+     .      .  349: 
+     .      .  350:   for(; i < iterations && (base_index + i) < max; i++){
+     .      6  351:     int list_val = (hash(el_array[base_index + i]->key))%list_num;
+     .      .  352:     if(sync_mode == 'm'){
+     .      .  353:       pthread_mutex_lock(&locks[list_val]);
+     .      .  354:     }
+     .      .  355:     if(sync_mode == 's')
+  1285   1285  356:       while(__sync_lock_test_and_set(&s_locks[list_val], 1));
+     .     44  357:     SortedList_insert(list_array[list_val], el_array[base_index + i]);
+     .      .  358:     if(sync_mode == 'm')
+     .      .  359:       pthread_mutex_unlock(&locks[list_val]);
+     .      .  360:     if(sync_mode == 's')
+     .      .  361:       __sync_lock_release(&s_locks[list_val]);
+     .      .  362:   }
+     .      .  363: 
+     .      .  364: 
+     .      .  365:   i = 0;
+     .      .  366:   int list_length = 0;
+     .      .  367:   for(; i < list_num; i++){
+     .      .  368:     if(sync_mode == 'm')
+     .      .  369:       pthread_mutex_lock(&locks[i]);
+     .      .  370:     if(sync_mode == 's')
+     .      .  371:       while(__sync_lock_test_and_set(&s_locks[i], 1));
+     .      .  372:     int sublist_len = SortedList_length(list_array[i]);
+     .      .  373:     if(sublist_len == -1){
+     .      .  374:       fprintf(stderr, "Inconsistency found when calculating length!");
+     .      .  375:       exit(2);
+     .      .  376:     }
+     .      .  377:     else
+     .      .  378:       list_length+=sublist_len;
+     .      .  379:     if(sync_mode == 'm')
+     .      .  380:       pthread_mutex_unlock(&locks[i]);
+     .      .  381:     if(sync_mode == 's')
+     .      .  382:       __sync_lock_release(&s_locks[i]);
+     .      .  383:   }
+     .      .  384:   for(; base_index < max_index_per_thread && base_index < max; base_index++){
+     .      3  385:     int list_val = (hash(el_array[base_index]->key))%list_num;
+     .      .  386:     if(sync_mode == 'm')
+     .      .  387:       pthread_mutex_lock(&locks[list_val]);
+     .      .  388:     if(sync_mode == 's')
+  1079   1079  389:       while(__sync_lock_test_and_set(&s_locks[list_val], 1)); 
+     .     38  390:     SortedList_t* element = SortedList_lookup(list_array[list_val], key_array[base_index]);
+     .      .  391:     if(!element){
+     .      .  392:       fprintf(stderr, "Element not found!");
+     .      .  393:       exit(2);
+     .      .  394:     }
+     .      .  395:     if(SortedList_delete(el_array[base_index])){
+     .      .  396:       fprintf(stderr, "Inconsistency found when deleting!");
+     .      .  397:       exit(2);
+     .      .  398:     }
+     .      .  399:     if(sync_mode == 'm')
+     .      .  400:       pthread_mutex_unlock(&locks[list_val]);
+     .      .  401:     if(sync_mode == 's')
+     .      .  402:       __sync_lock_release(&s_locks[list_val]);
+     .      .  403:   }
+     .      .  404:   return NULL;
+     .      .  405: }
+---
+     .      .  406: 
+     .      .  407: void thread_creator(int thread_num, int iterations, pthread_t *thread_array, SortedListElement_t** element_array, SortedListElement_t** list_array, int list_num){
+     .      .  408:   int i = 0;
+     .      .  409: 
+     .      .  410:   argument_holder.el_array = element_array;
+ROUTINE ====================== thread_function in /u/cs/ugrad/george/CS111/proj2b/lab2_list.c
+  2364   2455 Total samples (flat / cumulative)
+     .      .  322:     element = create_list_item(key_array[index]);
+     .      .  323:     list[index] = element;
+     .      .  324:   }
+     .      .  325: }
+     .      .  326: 
+---
+     .      .  327: void *thread_function(void *arg_ptr){
+     .      .  328: 
+     .      .  329:   int iterations = (*((struct args*)arg_ptr)).it_num;
+     .      .  330:   SortedListElement_t** el_array =  (*((struct args*)arg_ptr)).el_array;
+     .      .  331:   SortedList_t** list_array = (*((struct args*)arg_ptr)).list_array;
+     .      .  332:   int list_num = (*((struct args*)arg_ptr)).list_num;
+     .      .  333:   int max = (*((struct args*)arg_ptr)).max;
+     .      .  334: 
+     .      .  335:   int i = 0;
+     .      .  336:   //TODO: lock this
+     .      .  337:   if(sync_mode == 'm')
+     .      .  338:     pthread_mutex_lock(&el_arr_index_lock);
+     .      .  339:   if(sync_mode == 's')
+     .      .  340:     while(__sync_lock_test_and_set(&s_lock, 1));
+     .      .  341:   int base_index = element_array_index;
+     .      .  342:   int max_index_per_thread = base_index + iterations;
+     .      .  343:   element_array_index+=iterations;
+     .      .  344:   if(sync_mode == 'm')
+     .      .  345:     pthread_mutex_unlock(&el_arr_index_lock);
+     .      .  346:   if(sync_mode == 's')
+     .      .  347:     __sync_lock_release(&s_lock);
+     .      .  348:   //release locks
+     .      .  349: 
+     .      .  350:   for(; i < iterations && (base_index + i) < max; i++){
+     .      6  351:     int list_val = (hash(el_array[base_index + i]->key))%list_num;
+     .      .  352:     if(sync_mode == 'm'){
+     .      .  353:       pthread_mutex_lock(&locks[list_val]);
+     .      .  354:     }
+     .      .  355:     if(sync_mode == 's')
+  1285   1285  356:       while(__sync_lock_test_and_set(&s_locks[list_val], 1));
+     .     44  357:     SortedList_insert(list_array[list_val], el_array[base_index + i]);
+     .      .  358:     if(sync_mode == 'm')
+     .      .  359:       pthread_mutex_unlock(&locks[list_val]);
+     .      .  360:     if(sync_mode == 's')
+     .      .  361:       __sync_lock_release(&s_locks[list_val]);
+     .      .  362:   }
+     .      .  363: 
+     .      .  364: 
+     .      .  365:   i = 0;
+     .      .  366:   int list_length = 0;
+     .      .  367:   for(; i < list_num; i++){
+     .      .  368:     if(sync_mode == 'm')
+     .      .  369:       pthread_mutex_lock(&locks[i]);
+     .      .  370:     if(sync_mode == 's')
+     .      .  371:       while(__sync_lock_test_and_set(&s_locks[i], 1));
+     .      .  372:     int sublist_len = SortedList_length(list_array[i]);
+     .      .  373:     if(sublist_len == -1){
+     .      .  374:       fprintf(stderr, "Inconsistency found when calculating length!");
+     .      .  375:       exit(2);
+     .      .  376:     }
+     .      .  377:     else
+     .      .  378:       list_length+=sublist_len;
+     .      .  379:     if(sync_mode == 'm')
+     .      .  380:       pthread_mutex_unlock(&locks[i]);
+     .      .  381:     if(sync_mode == 's')
+     .      .  382:       __sync_lock_release(&s_locks[i]);
+     .      .  383:   }
+     .      .  384:   for(; base_index < max_index_per_thread && base_index < max; base_index++){
+     .      3  385:     int list_val = (hash(el_array[base_index]->key))%list_num;
+     .      .  386:     if(sync_mode == 'm')
+     .      .  387:       pthread_mutex_lock(&locks[list_val]);
+     .      .  388:     if(sync_mode == 's')
+  1079   1079  389:       while(__sync_lock_test_and_set(&s_locks[list_val], 1)); 
+     .     38  390:     SortedList_t* element = SortedList_lookup(list_array[list_val], key_array[base_index]);
+     .      .  391:     if(!element){
+     .      .  392:       fprintf(stderr, "Element not found!");
+     .      .  393:       exit(2);
+     .      .  394:     }
+     .      .  395:     if(SortedList_delete(el_array[base_index])){
+     .      .  396:       fprintf(stderr, "Inconsistency found when deleting!");
+     .      .  397:       exit(2);
+     .      .  398:     }
+     .      .  399:     if(sync_mode == 'm')
+     .      .  400:       pthread_mutex_unlock(&locks[list_val]);
+     .      .  401:     if(sync_mode == 's')
+     .      .  402:       __sync_lock_release(&s_locks[list_val]);
+     .      .  403:   }
+     .      .  404:   return NULL;
+     .      .  405: }
+---
+     .      .  406: 
+     .      .  407: void thread_creator(int thread_num, int iterations, pthread_t *thread_array, SortedListElement_t** element_array, SortedListElement_t** list_array, int list_num){
+     .      .  408:   int i = 0;
+     .      .  409: 
+     .      .  410:   argument_holder.el_array = element_array;

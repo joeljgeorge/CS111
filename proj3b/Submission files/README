@@ -1,0 +1,8 @@
+NAME: Joel George, David Feng
+EMAIL: joelgeorge03@gmail.com, david.x.feng@ucla.edu
+ID: 004786402, 604756204
+
+FILE DESCRIPTION:
+lab3b.py - the source file, written in Python, from which .csv files can be analyzed for corruption
+Makefile - used to build the program, clean the program, and build a submission file
+README - describes all other files

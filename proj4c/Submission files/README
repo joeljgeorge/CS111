@@ -1,0 +1,12 @@
+NAME: Joel George
+EMAIL: joelgeorge03@gmail.com
+ID: 004786402
+
+FILE DESCRIPTIONS:
+
+lab4c_tcp.c - Source code for part 1 of lab4c: basic TCP connection
+lab4b_tls.c - Source code for part 2 of lab4c: TLS connectino
+Makefile - Has a default build to make lab4c_tcp and lab4c_tls, and a clean
+	   target to erase all files created by the makefile, and finally
+	   a dist target to create the distribution tarball
+

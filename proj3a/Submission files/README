@@ -1,0 +1,10 @@
+NAME: Joel George
+EMAIL: joelgeorge03@gmail.com
+ID: 004786402
+
+FILE DESCRIPTIONS:
+lab3a.c - the source file which produces an image file summary
+
+ext2_fs.h - the library that contains all the relevant block and inode structures + constant needed to process an image file
+
+Makefile - builds the program lab3a using the default target; makes a submission tarball using the dist target; erases all created files with the clean target

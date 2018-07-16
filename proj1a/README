@@ -1,0 +1,43 @@
+NAME: Joel George
+EMAIL: joelgeorge03@gmail.com
+ID: 004786402
+
+Sources:
+
+For information on kill function:
+http://man7.org/linux/man-pages/man2/kill.2.html
+
+For information on poll function: 
+http://pubs.opengroup.org/onlinepubs/009695399/functions/poll.html
+
+For information on the pipe function:
+https://www.gnu.org/software/libc/manual/html_node/Creating-a-Pipe.html
+
+For information on the exec function:
+http://pubs.opengroup.org/onlinepubs/009695399/functions/exec.html
+
+For information on the waitpid function:
+https://stackoverflow.com/questions/22092088/the-waitpid-parameters
+https://linux.die.net/man/3/waitpid
+
+For information on the fork function:
+http://www.csl.mtu.edu/cs4411.ck/www/NOTES/process/fork/create.html
+
+For information termios, tcgetattr, tcsettr functions:
+http://man7.org/linux/man-pages/man3/termios.3.html
+https://www.gnu.org/software/libc/manual/html_node/Noncanon-Example.html
+
+Contents:
+C source file - lab1a.c 
+
+This file can be compiled into a executable that can accept an argument (--shell). This essentially tells the program to run the input in another process, which is executing as a bash shell. Without the argument, the executable simply puts the terminal into non-canonical mode with no echo and processes/outputs the input from the keyboard.
+
+Makefile
+
+This file has three modes: make (default), make dist, make clean. The first option simply compiles and builds the executable lab1a. The second option gathers all the necessary files for submission into a tarball. The third option erases all files that were created by the option 'make'. 
+
+README
+
+This file; documents the author of the code and the contents of the submitted tarball.
+
+

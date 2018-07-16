@@ -1,0 +1,7 @@
+NAME: Joel George
+EMAIL: joelgeorge03@gmail.com
+ID: 004786402
+
+lab4b.c - source file that contains code which builds into lab4b program
+README - this file, documents purpose of other files
+Makefile - this file builds lab4b; has default, check, clean, and dist modes
